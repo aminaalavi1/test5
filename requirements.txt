@@ -1,0 +1,9 @@
+streamlit
+autogen
+flaml[automl]
+chromadb==0.5.0  # <=0.5.0 as per the original constraint
+pandas
+matplotlib
+seaborn
+dask[dataframe]
+requests==2.31.0  # Required for Edamam API calls
