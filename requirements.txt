@@ -1,12 +1,12 @@
 streamlit==1.39.0
-pyautogen==0.2.16
+pyautogen==0.2.21
 flaml[automl]
-chromadb==0.5.0
+chromadb[duckdb]==0.5.0
 pandas
 matplotlib
 seaborn
 dask[dataframe]
-requests==2.31.0  # Required for Edamam API calls
+requests==2.31.0
 openai
 numpy<2.0
 protobuf==3.20.3
