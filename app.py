@@ -3,6 +3,7 @@ import logging
 from autogen.agentchat.contrib.retrieve_user_proxy_agent import RetrieveUserProxyAgent
 from autogen.agentchat.contrib.retrieve_assistant_agent import RetrieveAssistantAgent
 import requests
+from chromadb.config import Settings  # Import Settings for client configuration
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -60,6 +61,12 @@ assistant = RetrieveAssistantAgent(
 def label_rag_response(response):
     return {"source": "RAG System (PDFs)", "data": response}
 
+# Configure ChromaDB to use DuckDB
+client_settings = Settings(
+    chroma_db_impl="duckdb+parquet",
+    persist_directory=".chromadb/"  # Specify a directory to persist the data
+)
+
 ragproxyagent = RetrieveUserProxyAgent(
     name="UserProxy",
     human_input_mode="ALWAYS",
@@ -73,7 +80,8 @@ ragproxyagent = RetrieveUserProxyAgent(
         "chunk_token_size": 1000,
         "model": config_list[0]["model"],
         "chunk_mode": "multi_lines",
-        "custom_callback": label_rag_response
+        "custom_callback": label_rag_response,
+        "client_settings": client_settings  # Add this line to configure the client
     },
     llm_config={"config_list": config_list},
     function_map={"search_recipes": edamam_agent.search_recipes}
