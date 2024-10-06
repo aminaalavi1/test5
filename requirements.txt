@@ -1,7 +1,7 @@
 streamlit==1.39.0
 pyautogen==0.2.16
 flaml[automl]
-chromadb==0.4.24
+chromadb[duckdb]==0.4.24  # Use DuckDB instead of SQLite
 pandas
 matplotlib
 seaborn
