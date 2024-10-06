@@ -3,6 +3,7 @@ import logging
 from autogen.agentchat.contrib.retrieve_user_proxy_agent import RetrieveUserProxyAgent
 from autogen.agentchat.contrib.retrieve_assistant_agent import RetrieveAssistantAgent
 import requests
+from chromadb.config import Settings  # Import Settings for client configuration
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -13,7 +14,7 @@ st.title("Meal Plan Assistant")
 # Load OpenAI API key and Edamam API key from Streamlit secrets
 OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"]
 EDAMAM_APP_KEY = st.secrets["EDAMAM_APP_KEY"]
-EDAMAM_APP_ID = "fcbbd9b3"
+EDAMAM_APP_ID = st.secrets.get("EDAMAM_APP_ID", "fcbbd9b3")  # Ensure EDAMAM_APP_ID is set in secrets
 
 config_list = [{"model": "gpt-3.5-turbo", "api_key": OPENAI_API_KEY}]
 
@@ -52,13 +53,21 @@ edamam_agent = EdamamAPIAgent(EDAMAM_APP_ID, EDAMAM_APP_KEY)
 # Create the main assistant agent for meal planning
 assistant = RetrieveAssistantAgent(
     name="MealPlanAssistant",
-    system_message='''You are a helpful meal planning assistant. Greet the user, ask for their information (name, zip, chronic disease, cuisine preference, and ingredient dislikes). Tailor the meal plan based on the customer's chronic disease and preferences, and use the Edamam API to find specific recipes that match the customer's needs.''',
+    system_message='''
+    You are a helpful meal planning assistant. Greet the user, ask for their information (name, zip code, chronic disease, cuisine preference, and ingredient dislikes). Tailor the meal plan based on the customer's chronic disease and preferences, and use the Edamam API to find specific recipes that match the customer's needs.
+    ''',
     llm_config={"config_list": config_list}
 )
 
 # Create a RetrieveUserProxyAgent for document-based retrieval
 def label_rag_response(response):
     return {"source": "RAG System (PDFs)", "data": response}
+
+# Configure ChromaDB client settings to use DuckDB
+client_settings = Settings(
+    chroma_db_impl="duckdb+parquet",
+    persist_directory=".chromadb/"  # Specify a directory to persist the data
+)
 
 ragproxyagent = RetrieveUserProxyAgent(
     name="UserProxy",
@@ -73,7 +82,8 @@ ragproxyagent = RetrieveUserProxyAgent(
         "chunk_token_size": 1000,
         "model": config_list[0]["model"],
         "chunk_mode": "multi_lines",
-        "custom_callback": label_rag_response
+        "custom_callback": label_rag_response,
+        "client_settings": client_settings  # Configure ChromaDB client
     },
     llm_config={"config_list": config_list},
     function_map={"search_recipes": edamam_agent.search_recipes}
@@ -108,6 +118,7 @@ if user_input:
     start_chat(user_input)
 
     # Retrieve the assistant's response
+    # Note: Ensure that `RetrieveAssistantAgent` has a method to get the last message
     assistant_response = assistant.last_message(ragproxyagent)['content']
 
     st.session_state.messages.append({"role": "assistant", "content": assistant_response})
