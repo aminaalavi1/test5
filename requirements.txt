@@ -9,7 +9,3 @@ seaborn
 dask[dataframe]
 requests==2.31.0  # Required for Edamam API calls
 openai==0.27.0
-
-
-
-
