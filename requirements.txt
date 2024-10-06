@@ -9,3 +9,4 @@ dask[dataframe]
 requests==2.31.0  # Required for Edamam API calls
 openai
 numpy<2.0
+protobuf==3.20.3
